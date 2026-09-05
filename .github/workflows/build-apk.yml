@@ -30,7 +30,12 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build APK
-        run: eas build --platform android --profile preview --non-interactive --output ./build/lista-compras.apk
+        run: eas build --platform android --profile preview --non-interactive --wait
+
+      - name: Download APK
+        run: |
+          mkdir -p build
+          eas build:download --platform android --output ./build/lista-compras.apk --non-interactive
 
       - name: Criar Release e publicar APK
         uses: softprops/action-gh-release@v2
