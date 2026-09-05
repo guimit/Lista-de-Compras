@@ -8,20 +8,34 @@ jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
       - name: Instalar dependências
         run: npm install
+
       - name: Setup EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+
       - name: Build APK
-        run: eas build --platform android --profile preview --non-interactive
+        run: eas build --platform android --profile preview --non-interactive --output ./build/lista-compras.apk
+
+      - name: Criar Release e publicar APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: "Lista de Compras v${{ github.run_number }}"
+          files: ./build/lista-compras.apk
+          body: "Build automático gerado pelo GitHub Actions."
