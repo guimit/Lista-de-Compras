@@ -9,7 +9,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ShoppingItem } from '../types';
 import { colors, sizes, spacing, typography } from '../theme';
 
@@ -30,7 +29,6 @@ function parseQuantity(raw: string): number | null {
 }
 
 export default function CheckoutModal({ item, onConfirm, onCancel }: Props) {
-  const insets = useSafeAreaInsets();
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState('1');
 
@@ -64,18 +62,18 @@ export default function CheckoutModal({ item, onConfirm, onCancel }: Props) {
 
   // Nota: propositalmente não usamos o componente <Modal> nativo aqui. No Android, o Modal
   // abre numa janela separada que não acompanha o redimensionamento do teclado (diferente do
-  // resto do ecrã, que já funciona bem com o windowSoftInputMode padrão do Expo), fazendo o
-  // teclado tapar por completo os campos de preço/quantidade. Ao renderizar como uma
-  // sobreposição normal dentro do próprio ecrã, ela passa a beneficiar do mesmo comportamento.
+  // resto do ecrã, que já funciona bem com o windowSoftInputMode padrão do Expo). Renderizar
+  // como uma sobreposição normal dentro do próprio ecrã evita esse problema. O diálogo fica
+  // centrado (em vez de colado ao fundo) e o KeyboardAvoidingView usa "height" também no
+  // Android, para garantir que ele sobe acima do teclado mesmo que a janela não redimensione.
   return (
     <View style={styles.overlay}>
       <KeyboardAvoidingView
         style={styles.backdropContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <Pressable style={styles.backdrop} onPress={onCancel} />
-        <View style={[styles.sheet, { paddingBottom: spacing.xl + insets.bottom }]}>
-          <View style={styles.handle} />
+        <View style={styles.sheet}>
           <Text style={styles.title} numberOfLines={2}>
             {item.name}
           </Text>
@@ -139,25 +137,20 @@ export default function CheckoutModal({ item, onConfirm, onCancel }: Props) {
 
 const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFill, elevation: 10, zIndex: 10 },
-  backdropContainer: { flex: 1, justifyContent: 'flex-end' },
+  backdropContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+  },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.35)' },
   sheet: {
     backgroundColor: colors.background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    borderRadius: 20,
+    padding: spacing.xl,
     alignSelf: 'center',
     width: '100%',
-    maxWidth: 560,
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.divider,
-    marginBottom: spacing.lg,
+    maxWidth: 420,
   },
   title: { ...typography.total, color: colors.text, marginBottom: spacing.lg },
   fields: { flexDirection: 'row', gap: spacing.md },
