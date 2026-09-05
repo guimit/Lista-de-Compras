@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
+  BackHandler,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -41,6 +41,16 @@ export default function CheckoutModal({ item, onConfirm, onCancel }: Props) {
     }
   }, [item]);
 
+  // Substitui o botão "voltar" do Android pelo cancelar, como fazia o onRequestClose do Modal nativo.
+  useEffect(() => {
+    if (!item) return undefined;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      onCancel();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [item, onCancel]);
+
   const parsedPrice = parsePrice(price);
   const parsedQuantity = parseQuantity(quantity);
   const canConfirm = item !== null && parsedPrice !== null && parsedQuantity !== null;
@@ -50,8 +60,15 @@ export default function CheckoutModal({ item, onConfirm, onCancel }: Props) {
     onConfirm(item.id, parsedPrice, parsedQuantity);
   };
 
+  if (!item) return null;
+
+  // Nota: propositalmente não usamos o componente <Modal> nativo aqui. No Android, o Modal
+  // abre numa janela separada que não acompanha o redimensionamento do teclado (diferente do
+  // resto do ecrã, que já funciona bem com o windowSoftInputMode padrão do Expo), fazendo o
+  // teclado tapar por completo os campos de preço/quantidade. Ao renderizar como uma
+  // sobreposição normal dentro do próprio ecrã, ela passa a beneficiar do mesmo comportamento.
   return (
-    <Modal visible={item !== null} transparent animationType="slide" onRequestClose={onCancel}>
+    <View style={styles.overlay}>
       <KeyboardAvoidingView
         style={styles.backdropContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -60,7 +77,7 @@ export default function CheckoutModal({ item, onConfirm, onCancel }: Props) {
         <View style={[styles.sheet, { paddingBottom: spacing.xl + insets.bottom }]}>
           <View style={styles.handle} />
           <Text style={styles.title} numberOfLines={2}>
-            {item?.name}
+            {item.name}
           </Text>
 
           <View style={styles.fields}>
@@ -116,11 +133,12 @@ export default function CheckoutModal({ item, onConfirm, onCancel }: Props) {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  overlay: { ...StyleSheet.absoluteFill, elevation: 10, zIndex: 10 },
   backdropContainer: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.35)' },
   sheet: {

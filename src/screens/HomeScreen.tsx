@@ -100,22 +100,24 @@ export default function HomeScreen({ navigation }: Props) {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={insets.top + 56}
-    >
-      {input}
-      <FlatList
-        data={[...list.unchecked, ...list.checked]}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        keyboardShouldPersistTaps="handled"
-        ListEmptyComponent={<EmptyHint text="Lista vazia. Adiciona itens acima." />}
-      />
-      {summary}
+    <View style={styles.screen}>
+      <KeyboardAvoidingView
+        style={styles.flexFill}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={insets.top + 56}
+      >
+        {input}
+        <FlatList
+          data={[...list.unchecked, ...list.checked]}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={<EmptyHint text="Lista vazia. Adiciona itens acima." />}
+        />
+        {summary}
+      </KeyboardAvoidingView>
       {modal}
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -129,6 +131,7 @@ function EmptyHint({ text }: { text: string }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  flexFill: { flex: 1 },
   split: { flexDirection: 'row' },
   leftColumn: { flex: 45 },
   rightColumn: { flex: 55 },
