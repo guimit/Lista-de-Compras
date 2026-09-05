@@ -35,7 +35,8 @@ jobs:
       - name: Download APK
         run: |
           mkdir -p build
-          eas build:download --platform android --output ./build/lista-compras.apk --non-interactive
+          URL=$(eas build:list --platform android --status finished --limit 1 --non-interactive --json | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['artifacts']['buildUrl'])")
+          curl -L "$URL" -o ./build/lista-compras.apk
 
       - name: Criar Release e publicar APK
         uses: softprops/action-gh-release@v2
