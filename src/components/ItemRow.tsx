@@ -8,9 +8,10 @@ interface Props {
   item: ShoppingItem;
   onPress: (item: ShoppingItem) => void;
   onDelete: (id: string) => void;
+  onEdit: (item: ShoppingItem) => void;
 }
 
-function ItemRow({ item, onPress, onDelete }: Props) {
+function ItemRow({ item, onPress, onDelete, onEdit }: Props) {
   const lineTotal = (item.price ?? 0) * (item.quantity ?? 0);
 
   return (
@@ -19,9 +20,14 @@ function ItemRow({ item, onPress, onDelete }: Props) {
       rightThreshold={48}
       overshootRight={false}
       renderRightActions={() => (
-        <Pressable style={styles.deleteAction} onPress={() => onDelete(item.id)}>
-          <Text style={styles.deleteText}>Apagar</Text>
-        </Pressable>
+        <View style={styles.actionsRow}>
+          <Pressable style={styles.editAction} onPress={() => onEdit(item)}>
+            <Text style={styles.actionText}>Editar</Text>
+          </Pressable>
+          <Pressable style={styles.deleteAction} onPress={() => onDelete(item.id)}>
+            <Text style={styles.actionText}>Apagar</Text>
+          </Pressable>
+        </View>
       )}
     >
       <Pressable
@@ -78,11 +84,18 @@ const styles = StyleSheet.create({
   name: { ...typography.item, color: colors.text },
   nameChecked: { textDecorationLine: 'line-through', color: colors.strike },
   meta: { ...typography.meta, marginTop: spacing.xs },
+  actionsRow: { flexDirection: 'row' },
+  editAction: {
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 96,
+  },
   deleteAction: {
     backgroundColor: colors.danger,
     justifyContent: 'center',
     alignItems: 'center',
     width: 96,
   },
-  deleteText: { color: colors.onPrimary, fontWeight: '600', fontSize: 15 },
+  actionText: { color: colors.onPrimary, fontWeight: '600', fontSize: 15 },
 });

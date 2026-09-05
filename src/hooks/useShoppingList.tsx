@@ -25,6 +25,7 @@ interface ShoppingListState {
   checkedCount: number;
   addItem: (name: string) => void;
   removeItem: (id: string) => void;
+  editItem: (id: string, updates: { name: string; price?: number; quantity?: number }) => void;
   checkItem: (id: string, price: number, quantity: number) => void;
   uncheckItem: (id: string) => void;
   clearList: () => void;
@@ -79,6 +80,17 @@ function useShoppingListState(): ShoppingListState {
   const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
   }, []);
+
+  const editItem = useCallback(
+    (id: string, updates: { name: string; price?: number; quantity?: number }) => {
+      const trimmed = updates.name.trim();
+      if (!trimmed) return;
+      setItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, ...updates, name: trimmed } : item)),
+      );
+    },
+    [],
+  );
 
   const checkItem = useCallback(
     (id: string, price: number, quantity: number) => {
@@ -141,6 +153,7 @@ function useShoppingListState(): ShoppingListState {
     ...derived,
     addItem,
     removeItem,
+    editItem,
     checkItem,
     uncheckItem,
     clearList,
