@@ -1,20 +1,40 @@
+import 'react-native-gesture-handler';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ShoppingListProvider } from './src/hooks/useShoppingList';
+import HistoryScreen from './src/screens/HistoryScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import { colors } from './src/theme';
+import { RootStackParamList } from './src/types';
+
+const Stack = createStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ShoppingListProvider>
+          <NavigationContainer>
+            <StatusBar style="dark" />
+            <Stack.Navigator
+              screenOptions={{
+                headerStyle: { backgroundColor: colors.background },
+                headerTintColor: colors.primary,
+                headerTitleStyle: { fontWeight: '700', color: colors.text },
+                headerShadowVisible: false,
+                cardStyle: { backgroundColor: colors.background },
+              }}
+            >
+              <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Lista de Compras' }} />
+              <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'Histórico' }} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </ShoppingListProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
