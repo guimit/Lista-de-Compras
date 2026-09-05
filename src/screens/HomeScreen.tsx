@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddItemInput from '../components/AddItemInput';
 import CartSummary from '../components/CartSummary';
 import CheckoutModal from '../components/CheckoutModal';
+import EditItemModal, { EditItemUpdates } from '../components/EditItemModal';
 import ItemRow from '../components/ItemRow';
 import { useShoppingList } from '../hooks/useShoppingList';
 import { FOLD_BREAKPOINT, colors, spacing, typography } from '../theme';
@@ -27,6 +28,7 @@ export default function HomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const list = useShoppingList();
   const [checkoutItem, setCheckoutItem] = useState<ShoppingItem | null>(null);
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -51,8 +53,13 @@ export default function HomeScreen({ navigation }: Props) {
     setCheckoutItem(null);
   };
 
+  const handleSaveEdit = (id: string, updates: EditItemUpdates) => {
+    list.editItem(id, updates);
+    setEditingItem(null);
+  };
+
   const renderItem = ({ item }: { item: ShoppingItem }) => (
-    <ItemRow item={item} onPress={handlePress} onDelete={list.removeItem} />
+    <ItemRow item={item} onPress={handlePress} onDelete={list.removeItem} onEdit={setEditingItem} />
   );
   const keyExtractor = (item: ShoppingItem) => item.id;
 
@@ -66,6 +73,9 @@ export default function HomeScreen({ navigation }: Props) {
     />
   );
   const modal = <CheckoutModal item={checkoutItem} onConfirm={handleConfirm} onCancel={() => setCheckoutItem(null)} />;
+  const editModal = (
+    <EditItemModal item={editingItem} onSave={handleSaveEdit} onCancel={() => setEditingItem(null)} />
+  );
 
   if (!list.loaded) return <View style={styles.screen} />;
 
@@ -95,6 +105,7 @@ export default function HomeScreen({ navigation }: Props) {
           {summary}
         </View>
         {modal}
+        {editModal}
       </View>
     );
   }
@@ -117,6 +128,7 @@ export default function HomeScreen({ navigation }: Props) {
         {summary}
       </KeyboardAvoidingView>
       {modal}
+      {editModal}
     </View>
   );
 }
