@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { StackScreenProps } from '@react-navigation/stack';
 import React, { useCallback, useLayoutEffect, useState } from 'react';
 import {
@@ -16,9 +17,10 @@ import CartSummary from '../components/CartSummary';
 import CheckoutModal from '../components/CheckoutModal';
 import EditItemModal, { EditItemUpdates } from '../components/EditItemModal';
 import ItemRow from '../components/ItemRow';
+import MercadoModal from '../components/MercadoModal';
 import { useShoppingList } from '../hooks/useShoppingList';
 import { FOLD_BREAKPOINT, colors, spacing, typography } from '../theme';
-import { RootStackParamList, ShoppingItem } from '../types';
+import { Mercado, RootStackParamList, ShoppingItem } from '../types';
 
 type Props = StackScreenProps<RootStackParamList, 'Home'>;
 
@@ -29,13 +31,29 @@ export default function HomeScreen({ navigation }: Props) {
   const list = useShoppingList();
   const [checkoutItem, setCheckoutItem] = useState<ShoppingItem | null>(null);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+  const [mercadoOpen, setMercadoOpen] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Pressable onPress={() => navigation.navigate('History')} hitSlop={8} style={styles.headerButton}>
-          <Text style={styles.headerButtonText}>Histórico</Text>
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            onPress={() => navigation.navigate('History')}
+            hitSlop={8}
+            style={styles.headerButton}
+          >
+            <Text style={styles.headerButtonText}>Frequentes</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate('Historico')}
+            hitSlop={8}
+            style={styles.headerButton}
+            accessibilityRole="button"
+            accessibilityLabel="Histórico de compras"
+          >
+            <Ionicons name="time-outline" size={22} color={colors.primary} />
+          </Pressable>
+        </View>
       ),
     });
   }, [navigation]);
@@ -58,6 +76,11 @@ export default function HomeScreen({ navigation }: Props) {
     setEditingItem(null);
   };
 
+  const handleConcluir = (mercado: Mercado) => {
+    list.concluirCompra(mercado);
+    setMercadoOpen(false);
+  };
+
   const renderItem = ({ item }: { item: ShoppingItem }) => (
     <ItemRow item={item} onPress={handlePress} onDelete={list.removeItem} onEdit={setEditingItem} />
   );
@@ -69,12 +92,21 @@ export default function HomeScreen({ navigation }: Props) {
       total={list.total}
       itemCount={list.checkedCount}
       onNewList={list.clearList}
+      onConcluir={() => setMercadoOpen(true)}
+      canConcluir={list.checked.length > 0}
       bottomInset={insets.bottom}
     />
   );
   const modal = <CheckoutModal item={checkoutItem} onConfirm={handleConfirm} onCancel={() => setCheckoutItem(null)} />;
   const editModal = (
     <EditItemModal item={editingItem} onSave={handleSaveEdit} onCancel={() => setEditingItem(null)} />
+  );
+  const mercadoModal = (
+    <MercadoModal
+      visible={mercadoOpen}
+      onConfirm={handleConcluir}
+      onDismiss={() => setMercadoOpen(false)}
+    />
   );
 
   if (!list.loaded) return <View style={styles.screen} />;
@@ -106,6 +138,7 @@ export default function HomeScreen({ navigation }: Props) {
         </View>
         {modal}
         {editModal}
+        {mercadoModal}
       </View>
     );
   }
@@ -129,6 +162,7 @@ export default function HomeScreen({ navigation }: Props) {
       </KeyboardAvoidingView>
       {modal}
       {editModal}
+      {mercadoModal}
     </View>
   );
 }
@@ -156,6 +190,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
   },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   headerButton: { paddingHorizontal: spacing.sm },
   headerButtonText: { ...typography.item, color: colors.primary },
   empty: { padding: spacing.xl, alignItems: 'center' },

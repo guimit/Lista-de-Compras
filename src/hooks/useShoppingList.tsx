@@ -8,7 +8,8 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { ShoppingItem } from '../types';
+import { Mercado, ShoppingItem } from '../types';
+import { useHistorico } from './useHistorico';
 
 const ITEMS_KEY = '@lista_compras:items';
 const HISTORY_KEY = '@lista_compras:history';
@@ -29,6 +30,7 @@ interface ShoppingListState {
   checkItem: (id: string, price: number, quantity: number) => void;
   uncheckItem: (id: string) => void;
   clearList: () => void;
+  concluirCompra: (mercado: Mercado) => void;
   getSuggestions: (query: string) => string[];
 }
 
@@ -44,6 +46,7 @@ function parseJson<T>(raw: string | null, fallback: T): T {
 }
 
 function useShoppingListState(): ShoppingListState {
+  const { arquivarCompra } = useHistorico();
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [history, setHistory] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -123,6 +126,17 @@ function useShoppingListState(): ShoppingListState {
 
   const clearList = useCallback(() => setItems([]), []);
 
+  const concluirCompra = useCallback(
+    (mercado: Mercado) => {
+      const comprados = items.filter((item) => item.checked);
+      if (comprados.length === 0) return;
+      arquivarCompra(mercado, comprados);
+      // Mantém os itens que ficaram por comprar para a próxima ida às compras.
+      setItems((prev) => prev.filter((item) => !item.checked));
+    },
+    [items, arquivarCompra],
+  );
+
   const getSuggestions = useCallback(
     (query: string) => {
       const q = query.trim().toLowerCase();
@@ -157,6 +171,7 @@ function useShoppingListState(): ShoppingListState {
     checkItem,
     uncheckItem,
     clearList,
+    concluirCompra,
     getSuggestions,
   };
 }

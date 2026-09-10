@@ -5,6 +5,7 @@ export const colors = {
   surface: '#F8F8F8',
   primary: '#1A1A2E',
   accent: '#4CAF50',
+  action: '#FF6B2B',
   text: '#1A1A1A',
   textSecondary: '#757575',
   strike: '#BDBDBD',
@@ -33,4 +34,27 @@ export const FOLD_BREAKPOINT = 600;
 
 export function formatEuro(value: number): string {
   return `€${value.toFixed(2).replace('.', ',')}`;
+}
+
+// Formatação manual (à semelhança de formatEuro) para evitar as abreviaturas de mês
+// inconsistentes do Intl/Hermes no Android. Resultado: "05 Set 2026".
+const MESES_PT = [
+  'Jan',
+  'Fev',
+  'Mar',
+  'Abr',
+  'Mai',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Set',
+  'Out',
+  'Nov',
+  'Dez',
+] as const;
+
+export function formatData(ts: number): string {
+  const d = new Date(ts);
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${dia} ${MESES_PT[d.getMonth()]} ${d.getFullYear()}`;
 }

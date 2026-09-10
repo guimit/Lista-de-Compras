@@ -4,6 +4,7 @@ import { ShoppingItem } from '../types';
 import { colors } from '../theme';
 import { parsePrice, parseQuantity } from '../utils/parse';
 import CenteredDialog from './CenteredDialog';
+import PrecoSugestao from './PrecoSugestao';
 import { dialogFormStyles as styles } from './dialogFormStyles';
 
 interface Props {
@@ -39,6 +40,8 @@ export default function CheckoutModal({ item, onConfirm, onCancel }: Props) {
           <Text style={styles.title} numberOfLines={2}>
             {item.name}
           </Text>
+
+          <PrecoSugestao name={item.name} />
 
           <View style={styles.fields}>
             <View style={styles.field}>
