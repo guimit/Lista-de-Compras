@@ -6,6 +6,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { Mercado, ShoppingItem } from '../types';
@@ -51,6 +52,10 @@ function useShoppingListState(): ShoppingListState {
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [history, setHistory] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
+  // Rastreia de qual lista os `items`/`history` em memória realmente vieram, para os efeitos de
+  // persistência abaixo não gravarem dados da lista anterior sob a chave da lista recém-selecionada
+  // enquanto o carregamento assíncrono da lista nova ainda está em andamento.
+  const loadedListaIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -60,6 +65,7 @@ function useShoppingListState(): ShoppingListState {
         if (!active) return;
         setItems(parseJson<ShoppingItem[]>(rawItems, []));
         setHistory(parseJson<string[]>(rawHistory, []));
+        loadedListaIdRef.current = listaAtivaId;
       })
       .finally(() => active && setLoaded(true));
     return () => {
@@ -67,13 +73,19 @@ function useShoppingListState(): ShoppingListState {
     };
   }, [listaAtivaId]);
 
-  // Só persiste depois do carregamento inicial, para não sobrescrever o storage com o estado vazio.
+  // Só persiste depois do carregamento inicial, para não sobrescrever o storage com o estado vazio,
+  // e só quando `items`/`history` já pertencem à lista ativa atual (evita gravar dados da lista
+  // anterior sob a chave da lista nova durante a corrida da troca de lista).
   useEffect(() => {
-    if (loaded) AsyncStorage.setItem(itemsKey(listaAtivaId), JSON.stringify(items)).catch(() => {});
+    if (loaded && loadedListaIdRef.current === listaAtivaId) {
+      AsyncStorage.setItem(itemsKey(listaAtivaId), JSON.stringify(items)).catch(() => {});
+    }
   }, [items, loaded, listaAtivaId]);
 
   useEffect(() => {
-    if (loaded) AsyncStorage.setItem(historicoNomesKey(listaAtivaId), JSON.stringify(history)).catch(() => {});
+    if (loaded && loadedListaIdRef.current === listaAtivaId) {
+      AsyncStorage.setItem(historicoNomesKey(listaAtivaId), JSON.stringify(history)).catch(() => {});
+    }
   }, [history, loaded, listaAtivaId]);
 
   const addItem = useCallback((name: string) => {

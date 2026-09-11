@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { CompraArquivada, Mercado, ProdutoHistorico, ShoppingItem } from '../types';
 import { comprasKey, produtosKey } from '../utils/storageKeys';
 import { useListas } from './useListas';
@@ -39,6 +39,10 @@ function useHistoricoState(): HistoricoState {
   const [compras, setCompras] = useState<CompraArquivada[]>([]);
   const [produtos, setProdutos] = useState<ProdutoHistorico[]>([]);
   const [loaded, setLoaded] = useState(false);
+  // Rastreia de qual lista os `compras`/`produtos` em memória realmente vieram, para os efeitos de
+  // persistência abaixo não gravarem dados da lista anterior sob a chave da lista recém-selecionada
+  // enquanto o carregamento assíncrono da lista nova ainda está em andamento.
+  const loadedListaIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -48,6 +52,7 @@ function useHistoricoState(): HistoricoState {
         if (!active) return;
         setCompras(parseJson<CompraArquivada[]>(rawCompras, []));
         setProdutos(parseJson<ProdutoHistorico[]>(rawProdutos, []));
+        loadedListaIdRef.current = listaAtivaId;
       })
       .finally(() => active && setLoaded(true));
     return () => {
@@ -55,13 +60,19 @@ function useHistoricoState(): HistoricoState {
     };
   }, [listaAtivaId]);
 
-  // Só persiste depois do carregamento inicial, para não sobrescrever o storage com o estado vazio.
+  // Só persiste depois do carregamento inicial, para não sobrescrever o storage com o estado vazio,
+  // e só quando `compras`/`produtos` já pertencem à lista ativa atual (evita gravar dados da lista
+  // anterior sob a chave da lista nova durante a corrida da troca de lista).
   useEffect(() => {
-    if (loaded) AsyncStorage.setItem(comprasKey(listaAtivaId), JSON.stringify(compras)).catch(() => {});
+    if (loaded && loadedListaIdRef.current === listaAtivaId) {
+      AsyncStorage.setItem(comprasKey(listaAtivaId), JSON.stringify(compras)).catch(() => {});
+    }
   }, [compras, loaded, listaAtivaId]);
 
   useEffect(() => {
-    if (loaded) AsyncStorage.setItem(produtosKey(listaAtivaId), JSON.stringify(produtos)).catch(() => {});
+    if (loaded && loadedListaIdRef.current === listaAtivaId) {
+      AsyncStorage.setItem(produtosKey(listaAtivaId), JSON.stringify(produtos)).catch(() => {});
+    }
   }, [produtos, loaded, listaAtivaId]);
 
   const arquivarCompra = useCallback((mercado: Mercado, itens: ShoppingItem[]): CompraArquivada => {
