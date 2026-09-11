@@ -2,8 +2,9 @@ import { StackScreenProps } from '@react-navigation/stack';
 import React from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useHistorico } from '../hooks/useHistorico';
 import { useShoppingList } from '../hooks/useShoppingList';
-import { colors, sizes, spacing, typography } from '../theme';
+import { colors, formatEuro, sizes, spacing, typography } from '../theme';
 import { RootStackParamList } from '../types';
 
 type Props = StackScreenProps<RootStackParamList, 'History'>;
@@ -11,6 +12,7 @@ type Props = StackScreenProps<RootStackParamList, 'History'>;
 export default function HistoryScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { history, items, addItem } = useShoppingList();
+  const { loaded: precosLoaded, getPrecoStats } = useHistorico();
   const inList = new Set(items.map((item) => item.name.toLowerCase()));
   const data = [...history].reverse();
 
@@ -35,13 +37,17 @@ export default function HistoryScreen({ navigation }: Props) {
       }
       renderItem={({ item: name }) => {
         const alreadyInList = inList.has(name.toLowerCase());
+        const stats = precosLoaded ? getPrecoStats(name) : null;
         return (
           <Pressable
             onPress={() => add(name)}
             disabled={alreadyInList}
             style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           >
-            <Text style={[styles.name, alreadyInList && styles.nameDim]}>{name}</Text>
+            <View style={styles.info}>
+              <Text style={[styles.name, alreadyInList && styles.nameDim]}>{name}</Text>
+              {stats && <Text style={styles.price}>Preço médio: {formatEuro(stats.geral)}</Text>}
+            </View>
             <Text style={styles.action}>{alreadyInList ? 'Na lista' : '+ Adicionar'}</Text>
           </Pressable>
         );
@@ -63,8 +69,10 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.divider,
   },
   rowPressed: { backgroundColor: colors.surface },
-  name: { ...typography.item, color: colors.text, flex: 1 },
+  info: { flex: 1, paddingVertical: spacing.sm, marginRight: spacing.sm },
+  name: { ...typography.item, color: colors.text },
   nameDim: { color: colors.textSecondary },
+  price: { ...typography.meta, marginTop: 2 },
   action: { ...typography.meta, color: colors.accent, fontWeight: '500' },
   empty: { padding: spacing.xl, alignItems: 'center' },
   emptyText: { ...typography.meta, textAlign: 'center' },
