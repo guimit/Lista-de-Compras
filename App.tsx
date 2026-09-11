@@ -6,6 +6,7 @@ import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HistoricoProvider } from './src/hooks/useHistorico';
+import { ListasProvider } from './src/hooks/useListas';
 import { ShoppingListProvider } from './src/hooks/useShoppingList';
 import DetalheCompraScreen from './src/screens/DetalheCompraScreen';
 import HistoricoScreen from './src/screens/HistoricoScreen';
@@ -20,35 +21,37 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <HistoricoProvider>
-          <ShoppingListProvider>
-            <NavigationContainer>
-              <StatusBar style="dark" />
-              <Stack.Navigator
-                screenOptions={{
-                  headerStyle: { backgroundColor: colors.background },
-                  headerTintColor: colors.primary,
-                  headerTitleStyle: { fontWeight: '700', color: colors.text },
-                  headerShadowVisible: false,
-                  cardStyle: { backgroundColor: colors.background },
-                }}
-              >
-                <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Lista de Compras' }} />
-                <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'Frequentes' }} />
-                <Stack.Screen
-                  name="Historico"
-                  component={HistoricoScreen}
-                  options={{ title: 'Histórico' }}
-                />
-                <Stack.Screen
-                  name="DetalheCompra"
-                  component={DetalheCompraScreen}
-                  options={{ title: 'Compra' }}
-                />
-              </Stack.Navigator>
-            </NavigationContainer>
-          </ShoppingListProvider>
-        </HistoricoProvider>
+        <ListasProvider>
+          <HistoricoProvider>
+            <ShoppingListProvider>
+              <NavigationContainer>
+                <StatusBar style="dark" />
+                <Stack.Navigator
+                  screenOptions={{
+                    headerStyle: { backgroundColor: colors.background },
+                    headerTintColor: colors.primary,
+                    headerTitleStyle: { fontWeight: '700', color: colors.text },
+                    headerShadowVisible: false,
+                    cardStyle: { backgroundColor: colors.background },
+                  }}
+                >
+                  <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Lista de Compras' }} />
+                  <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'Frequentes' }} />
+                  <Stack.Screen
+                    name="Historico"
+                    component={HistoricoScreen}
+                    options={{ title: 'Histórico' }}
+                  />
+                  <Stack.Screen
+                    name="DetalheCompra"
+                    component={DetalheCompraScreen}
+                    options={{ title: 'Compra' }}
+                  />
+                </Stack.Navigator>
+              </NavigationContainer>
+            </ShoppingListProvider>
+          </HistoricoProvider>
+        </ListasProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -18,6 +18,9 @@ import CheckoutModal from '../components/CheckoutModal';
 import EditItemModal, { EditItemUpdates } from '../components/EditItemModal';
 import ItemRow from '../components/ItemRow';
 import MercadoModal from '../components/MercadoModal';
+import NovaListaModal from '../components/NovaListaModal';
+import TabBar from '../components/TabBar';
+import { useListas } from '../hooks/useListas';
 import { useShoppingList } from '../hooks/useShoppingList';
 import { FOLD_BREAKPOINT, colors, spacing, typography } from '../theme';
 import { Mercado, RootStackParamList, ShoppingItem } from '../types';
@@ -29,9 +32,11 @@ export default function HomeScreen({ navigation }: Props) {
   const isUnfolded = width >= FOLD_BREAKPOINT;
   const insets = useSafeAreaInsets();
   const list = useShoppingList();
+  const { listas, listaAtivaId, listaAtiva, setListaAtiva, criarLista, apagarLista } = useListas();
   const [checkoutItem, setCheckoutItem] = useState<ShoppingItem | null>(null);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [mercadoOpen, setMercadoOpen] = useState(false);
+  const [novaListaOpen, setNovaListaOpen] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -81,18 +86,35 @@ export default function HomeScreen({ navigation }: Props) {
     setMercadoOpen(false);
   };
 
+  const handleConcluirPress = () => {
+    if (listaAtiva.lojas.length === 1) {
+      list.concluirCompra(listaAtiva.lojas[0]);
+    } else {
+      setMercadoOpen(true);
+    }
+  };
+
   const renderItem = ({ item }: { item: ShoppingItem }) => (
     <ItemRow item={item} onPress={handlePress} onDelete={list.removeItem} onEdit={setEditingItem} />
   );
   const keyExtractor = (item: ShoppingItem) => item.id;
 
   const input = <AddItemInput onAdd={list.addItem} getSuggestions={list.getSuggestions} />;
+  const tabBar = (
+    <TabBar
+      listas={listas}
+      listaAtiva={listaAtivaId}
+      onSelect={setListaAtiva}
+      onNova={() => setNovaListaOpen(true)}
+      onApagar={apagarLista}
+    />
+  );
   const summary = (
     <CartSummary
       total={list.total}
       itemCount={list.checkedCount}
       onNewList={list.clearList}
-      onConcluir={() => setMercadoOpen(true)}
+      onConcluir={handleConcluirPress}
       canConcluir={list.checked.length > 0}
       bottomInset={insets.bottom}
     />
@@ -104,8 +126,17 @@ export default function HomeScreen({ navigation }: Props) {
   const mercadoModal = (
     <MercadoModal
       visible={mercadoOpen}
+      lojas={listaAtiva.lojas}
       onConfirm={handleConcluir}
       onDismiss={() => setMercadoOpen(false)}
+    />
+  );
+  const novaListaModal = (
+    <NovaListaModal
+      visible={novaListaOpen}
+      listas={listas}
+      onCriar={criarLista}
+      onDismiss={() => setNovaListaOpen(false)}
     />
   );
 
@@ -115,6 +146,7 @@ export default function HomeScreen({ navigation }: Props) {
     return (
       <View style={[styles.screen, styles.split]}>
         <View style={styles.leftColumn}>
+          {tabBar}
           {input}
           <FlatList
             data={list.unchecked}
@@ -139,12 +171,14 @@ export default function HomeScreen({ navigation }: Props) {
         {modal}
         {editModal}
         {mercadoModal}
+        {novaListaModal}
       </View>
     );
   }
 
   return (
     <View style={styles.screen}>
+      {tabBar}
       <KeyboardAvoidingView
         style={styles.flexFill}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -163,6 +197,7 @@ export default function HomeScreen({ navigation }: Props) {
       {modal}
       {editModal}
       {mercadoModal}
+      {novaListaModal}
     </View>
   );
 }

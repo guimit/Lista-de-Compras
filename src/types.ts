@@ -7,7 +7,15 @@ export interface ShoppingItem {
   checkedAt?: number; // timestamp
 }
 
-export type Mercado = 'Intermarché' | 'Pingo Doce' | 'Continente' | 'Lidl' | 'Aldi';
+export type Mercado = string; // loja, definida por lista (Lista.lojas)
+
+export interface Lista {
+  id: string;
+  nome: string;
+  lojas: string[];
+  criadaEm: number; // timestamp
+  ordem: number; // posição no tab bar
+}
 
 export interface CompraArquivada {
   id: string;
