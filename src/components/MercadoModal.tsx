@@ -6,21 +6,20 @@ import { Mercado } from '../types';
 import CenteredDialog from './CenteredDialog';
 import { dialogFormStyles } from './dialogFormStyles';
 
-const MERCADOS: Mercado[] = ['Intermarché', 'Pingo Doce', 'Continente', 'Lidl', 'Aldi'];
-
 interface Props {
   visible: boolean;
+  lojas: string[];
   onConfirm: (mercado: Mercado) => void;
   onDismiss: () => void;
 }
 
-export default function MercadoModal({ visible, onConfirm, onDismiss }: Props) {
+export default function MercadoModal({ visible, lojas, onConfirm, onDismiss }: Props) {
   return (
     <CenteredDialog visible={visible} onDismiss={onDismiss}>
       <Text style={dialogFormStyles.title}>Onde compraste?</Text>
 
       <View style={styles.list}>
-        {MERCADOS.map((mercado) => (
+        {lojas.map((mercado) => (
           <Pressable
             key={mercado}
             onPress={() => onConfirm(mercado)}

@@ -2,9 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { CompraArquivada, Mercado, ProdutoHistorico, ShoppingItem } from '../types';
-
-const COMPRAS_KEY = '@lista_compras:historico_compras';
-const PRODUTOS_KEY = '@lista_compras:historico_precos';
+import { comprasKey, produtosKey } from '../utils/storageKeys';
+import { useListas } from './useListas';
 
 const MERCADO_LIMIT = 3;
 
@@ -36,13 +35,15 @@ function parseJson<T>(raw: string | null, fallback: T): T {
 }
 
 function useHistoricoState(): HistoricoState {
+  const { listaAtivaId } = useListas();
   const [compras, setCompras] = useState<CompraArquivada[]>([]);
   const [produtos, setProdutos] = useState<ProdutoHistorico[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
-    AsyncStorage.multiGet([COMPRAS_KEY, PRODUTOS_KEY])
+    setLoaded(false);
+    AsyncStorage.multiGet([comprasKey(listaAtivaId), produtosKey(listaAtivaId)])
       .then(([[, rawCompras], [, rawProdutos]]) => {
         if (!active) return;
         setCompras(parseJson<CompraArquivada[]>(rawCompras, []));
@@ -52,16 +53,16 @@ function useHistoricoState(): HistoricoState {
     return () => {
       active = false;
     };
-  }, []);
+  }, [listaAtivaId]);
 
   // Só persiste depois do carregamento inicial, para não sobrescrever o storage com o estado vazio.
   useEffect(() => {
-    if (loaded) AsyncStorage.setItem(COMPRAS_KEY, JSON.stringify(compras)).catch(() => {});
-  }, [compras, loaded]);
+    if (loaded) AsyncStorage.setItem(comprasKey(listaAtivaId), JSON.stringify(compras)).catch(() => {});
+  }, [compras, loaded, listaAtivaId]);
 
   useEffect(() => {
-    if (loaded) AsyncStorage.setItem(PRODUTOS_KEY, JSON.stringify(produtos)).catch(() => {});
-  }, [produtos, loaded]);
+    if (loaded) AsyncStorage.setItem(produtosKey(listaAtivaId), JSON.stringify(produtos)).catch(() => {});
+  }, [produtos, loaded, listaAtivaId]);
 
   const arquivarCompra = useCallback((mercado: Mercado, itens: ShoppingItem[]): CompraArquivada => {
     const data = Date.now();

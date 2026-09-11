@@ -9,10 +9,10 @@ import React, {
   useState,
 } from 'react';
 import { Mercado, ShoppingItem } from '../types';
+import { historicoNomesKey, itemsKey } from '../utils/storageKeys';
 import { useHistorico } from './useHistorico';
+import { useListas } from './useListas';
 
-const ITEMS_KEY = '@lista_compras:items';
-const HISTORY_KEY = '@lista_compras:history';
 const HISTORY_LIMIT = 100;
 const SUGGESTION_LIMIT = 6;
 
@@ -47,13 +47,15 @@ function parseJson<T>(raw: string | null, fallback: T): T {
 
 function useShoppingListState(): ShoppingListState {
   const { arquivarCompra } = useHistorico();
+  const { listaAtivaId } = useListas();
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [history, setHistory] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
-    AsyncStorage.multiGet([ITEMS_KEY, HISTORY_KEY])
+    setLoaded(false);
+    AsyncStorage.multiGet([itemsKey(listaAtivaId), historicoNomesKey(listaAtivaId)])
       .then(([[, rawItems], [, rawHistory]]) => {
         if (!active) return;
         setItems(parseJson<ShoppingItem[]>(rawItems, []));
@@ -63,16 +65,16 @@ function useShoppingListState(): ShoppingListState {
     return () => {
       active = false;
     };
-  }, []);
+  }, [listaAtivaId]);
 
   // Só persiste depois do carregamento inicial, para não sobrescrever o storage com o estado vazio.
   useEffect(() => {
-    if (loaded) AsyncStorage.setItem(ITEMS_KEY, JSON.stringify(items)).catch(() => {});
-  }, [items, loaded]);
+    if (loaded) AsyncStorage.setItem(itemsKey(listaAtivaId), JSON.stringify(items)).catch(() => {});
+  }, [items, loaded, listaAtivaId]);
 
   useEffect(() => {
-    if (loaded) AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(history)).catch(() => {});
-  }, [history, loaded]);
+    if (loaded) AsyncStorage.setItem(historicoNomesKey(listaAtivaId), JSON.stringify(history)).catch(() => {});
+  }, [history, loaded, listaAtivaId]);
 
   const addItem = useCallback((name: string) => {
     const trimmed = name.trim();
